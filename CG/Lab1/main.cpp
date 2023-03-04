@@ -2,14 +2,38 @@
 
 #include <GL/glut.h>
 #include <GL/gl.h>
+#include <cmath>
+
+#define X_MIN (-std::numbers::pi / 2)
+#define X_MAX (2 * std::numbers::pi)
+
+#define Y_MIN (-1.5)
+#define Y_MAX (+1.5)
+
+double height, width;
 
 void windowResize(GLint width, GLint height);
+
 void render();
+
+void drawGrid();
+
+void drawAxis();
+
+void pointsToScreenVertices(double x1, double y1, double x2, double y2);
+
+void pointToScreen(double x, double y, double &screenX, double &screenY);
+
+int floorSigned(double x) {
+    return (int)floor(x) + (x < 0 ? 1 : 0);
+}
+
+void bitmapString(double x, double y, const char *string);
 
 int main(int argc, char **argv) {
     glutInit(&argc, argv);
 
-    glutInitWindowSize(1280, 720);
+    glutInitWindowSize(1280, 580);
     glutInitWindowPosition(120, 80);
     glutCreateWindow("Hello, world");
 
@@ -17,6 +41,9 @@ int main(int argc, char **argv) {
     glutReshapeFunc(windowResize);
     glutDisplayFunc(render);
 
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
 
@@ -25,32 +52,225 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+int counter = 0;
+
 void render() {
-    glClearColor(0.0f, 0.2f, 0.0f, 1.0f);
+    glClearColor(1, 1, 1, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Set color to red
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glBegin(GL_LINES);
-
-    glPointSize(3);
-
-    glVertex2d(0.5, 0.25);
-    glVertex2d(0.5, 0.5);
-    glVertex2d(0.75, 0.5);
-    glVertex2d(1, 0.5);
-
-    glEnd();
+    drawGrid();
+    drawAxis();
 
     glutSwapBuffers();
 }
 
-void windowResize(GLint width, GLint height) {
-    GLdouble ratio = GLdouble (height) / width;
+void drawAxis() {
+
+    constexpr double rangeX = X_MAX - X_MIN, rangeY = Y_MAX - Y_MIN;
+
+    double originX, originY;
+    pointToScreen(0, 0, originX, originY);
+
+    glLineWidth(2);
+
+    glBegin(GL_LINES);
+
+    glColor3b(0, 0, 0);
+
+    glVertex2d(-width, 0);
+    glVertex2d(+width - 4, 0);
+    glVertex2d(originX, +height - 4);
+    glVertex2d(originX, -height);
+
+    glEnd();
+
+    const double arrowWidth = 20, arrowHeight = 8, arrowReturnOffset = 8;
+
+    glBegin(GL_TRIANGLE_STRIP);
+
+    glVertex2d(+width - arrowWidth, -arrowHeight);
+    glVertex2d(+width - arrowWidth + arrowReturnOffset, 0);
+    glVertex2d(+width, 0);
+    glVertex2d(+width - arrowWidth, +arrowHeight);
+
+    glEnd();
+
+    glBegin(GL_TRIANGLE_STRIP);
+
+    glVertex2d(originX - arrowHeight, height - arrowWidth);
+    glVertex2d(originX, height - arrowWidth + arrowReturnOffset);
+    glVertex2d(originX, height);
+    glVertex2d(originX + arrowHeight, height - arrowWidth);
+
+    glEnd();
+}
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "Simplify"
+#pragma ide diagnostic ignored "UnreachableCode"
+
+void drawGrid() {
+    double minStepSizePixels = 16;
+    double labelMinStepSizePixels = 88;
+
+    int stepsPerUnitX = 1, stepsPerUnitY = 1;
+
+    double unitSizeX = 2 * width / (X_MAX - X_MIN);
+    double unitSizeY = 2 * height / (Y_MAX - Y_MIN);
+
+    while (unitSizeX / (2 * stepsPerUnitX) >= minStepSizePixels) {
+        stepsPerUnitX *= 2;
+    }
+
+    while (unitSizeY / (2 * stepsPerUnitY) >= minStepSizePixels) {
+        stepsPerUnitY *= 2;
+    }
+
+    double subunitValueX = 1.0 / stepsPerUnitX;
+    double subunitValueY = 1.0 / stepsPerUnitY;
+
+    int minSubunitIndexX = floorSigned(X_MIN * stepsPerUnitX);
+    int maxSubunitIndexX = floorSigned(X_MAX * stepsPerUnitX);
+    int minSubunitIndexY = floorSigned(Y_MIN * stepsPerUnitY);
+    int maxSubunitIndexY = floorSigned(Y_MAX * stepsPerUnitY);
+
+    glLineWidth(1);
+
+    glBegin(GL_LINES);
+    glColor3d(0.75, 0.75, 0.75);
+
+    for (int i = minSubunitIndexX; i <= maxSubunitIndexX; ++i) {
+        if (i % stepsPerUnitX == 0) {
+            continue;
+        }
+
+        double x = subunitValueX * i;
+
+        pointsToScreenVertices(x, Y_MAX, x, Y_MIN);
+    }
+
+    for (int i = minSubunitIndexY; i <= maxSubunitIndexY; ++i) {
+        if (i % stepsPerUnitY == 0) {
+            continue;
+        }
+
+        double y = subunitValueY * i;
+
+        pointsToScreenVertices(X_MAX, y, X_MIN, y);
+    }
+
+    glEnd();
+
+    int subunitsPerLabelX = 1, subunitsPerLabelY = 1;
+
+    while ((unitSizeX / stepsPerUnitX) * (2 * subunitsPerLabelX) < labelMinStepSizePixels) {
+        subunitsPerLabelX *= 2;
+    }
+
+    while ((unitSizeY / stepsPerUnitY) * (2 * subunitsPerLabelY) < labelMinStepSizePixels) {
+        subunitsPerLabelY *= 2;
+    }
+
+    double screenX, screenY;
+
+    static char label[24];
+
+    glColor3d(0, 0, 0);
+
+    for (int i = minSubunitIndexX; i <= maxSubunitIndexX; ++i) {
+        if (i == 0) {
+            continue;
+        }
+
+        double x = subunitValueX * i;
+
+        if (i % stepsPerUnitX == 0 || i % subunitsPerLabelX == 0) {
+            std::snprintf(label, 24, "%g", x);
+
+            pointToScreen(x, 0, screenX, screenY);
+
+            bitmapString(screenX + 2, screenY - 16, label);
+        }
+
+        if (i % stepsPerUnitX == 0) {
+            glBegin(GL_LINES);
+
+
+            pointsToScreenVertices(x, Y_MAX, x, Y_MIN);
+
+            glEnd();
+        }
+    }
+
+    for (int i = minSubunitIndexY; i <= maxSubunitIndexY; ++i) {
+        if (i == 0) {
+            continue;
+        }
+
+        double y = subunitValueY * i;
+
+        if (i % stepsPerUnitY == 0 || i % subunitsPerLabelY == 0) {
+            std::snprintf(label, 24, "%g", y);
+
+            pointToScreen(0, y, screenX, screenY);
+
+            bitmapString(screenX - 22, screenY, label);
+        }
+
+        if (i % stepsPerUnitX == 0) {
+            glBegin(GL_LINES);
+
+            pointsToScreenVertices(X_MAX, y, X_MIN, y);
+
+            glEnd();
+        }
+    }
+
+
+    glEnd();
+}
+
+#pragma clang diagnostic pop
+
+void windowResize(GLint newWidth, GLint newHeight) {
+    width = newWidth / 2.0;
+    height = newHeight / 2.0;
+
+    glViewport(0, 0, newWidth, newHeight);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0, 1, ratio, 0);
+    gluOrtho2D(-width, width, -height, height);
 
     glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void pointsToScreenVertices(double x1, double y1, double x2, double y2) {
+    double screenX, screenY;
+
+    pointToScreen(x1, y1, screenX, screenY);
+
+    glVertex2d(screenX, screenY);
+
+    pointToScreen(x2, y2, screenX, screenY);
+
+    glVertex2d(screenX, screenY);
+}
+
+void pointToScreen(double x, double y, double &screenX, double &screenY) {
+    constexpr double rangeX = X_MAX - X_MIN, rangeY = Y_MAX - Y_MIN;
+
+    screenX = (x - X_MIN) / rangeX * 2 * width - width;
+    screenY = (y - Y_MIN) / rangeY * 2 * height - height;
+}
+
+void bitmapString(double x, double y, const char *string) {
+    double stringLength = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, reinterpret_cast<const unsigned char *>(string));
+
+    double xOffset = -stringLength / 2;
+    glRasterPos2d(x + xOffset, y);
+
+    for (const char *c = string; *c != '\0'; ++c) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c);
+    }
 }
