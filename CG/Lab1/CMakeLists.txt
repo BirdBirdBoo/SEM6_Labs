@@ -15,7 +15,5 @@ find_package(GLU REQUIRED)
 message(OGL FOUND: ${OpenGL_OpenGL_FOUND})
 message(GLU FOUND: ${OPENGL_glu_LIBRARY})
 
-
-add_executable(Lab1 main.cpp)
+add_executable(Lab1 main.cpp main.h)
 target_link_libraries(Lab1 PUBLIC OpenGL::GL freeglut glu32)
-
