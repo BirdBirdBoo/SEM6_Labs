@@ -6,6 +6,7 @@
 #include <GL/gl.h>
 #include <GL/freeglut.h>
 #include <cmath>
+#include <array>
 
 #define X_MIN (xMin * scale)
 #define X_MAX (xMax * scale)
@@ -13,12 +14,28 @@
 #define Y_MIN (yMin * scale)
 #define Y_MAX (yMax * scale)
 
+using Point = std::pair<double, double>;
+
 constexpr double xMin = -8.5, xMax = 8.5, yMin = -4, yMax = 4;
+
+auto quad = std::array{
+        Point{0.0, 1},
+        Point{1.0, 0},
+        Point{2.0, 1.5},
+        Point{2.5, 0},
+};
+
 double scale = 0.7;
 
 double height, width;
 double unitsPerPixelX;
 double unitsPerPixelY;
+
+void drawQuad();
+
+void glexVertex2p(const Point &point) {
+    glVertex2d(point.first, point.second);
+}
 
 int floorSigned(double x) {
     return static_cast<int>(floor(x)) + (x < 0 ? 1 : 0);
@@ -31,6 +48,7 @@ int main(int argc, char **argv) {
     glutInitWindowPosition(120, 80);
     glutCreateWindow("Hello, world");
 
+    glutIdleFunc(glutPostRedisplay);
     glutKeyboardFunc(onKeyDown);
     glutMouseWheelFunc(onMouseWheel);
     glutReshapeFunc(windowResize);
@@ -53,6 +71,7 @@ void render() {
 
     drawGrid();
     drawAxis();
+    drawQuad();
 
     glutSwapBuffers();
 }
@@ -223,6 +242,44 @@ void drawGrid() {
     glEnd();
 }
 
+void drawQuad() {
+    const int anchorPoint = 1;
+
+    const double a = 0.5;
+    static int counter = 0;
+    ++counter;
+    double rotationAngle = counter / 2.0;
+    double x = ((counter % 1000) - 500) / 100.0;
+
+    glColor4d(0.8, 0.4, 0.4, 0.4);
+
+    glPushMatrix();
+
+    glTranslated(x, a * x, 0);
+    glTranslated(quad[anchorPoint].first, quad[anchorPoint].second, 0);
+    glRotated(rotationAngle, 0, 0, 1);
+    glTranslated(-quad[anchorPoint].first, -quad[anchorPoint].second, 0);
+
+    glBegin(GL_TRIANGLE_STRIP);
+
+    glexVertex2p(quad[0]);
+    glexVertex2p(quad[1]);
+    glexVertex2p(quad[2]);
+    glexVertex2p(quad[3]);
+
+    glEnd();
+
+    glPointSize(8);
+    glBegin(GL_POINTS);
+
+    glColor3d(0.8, 0.4, 0.4);
+    glexVertex2p(quad[anchorPoint]);
+
+    glEnd();
+
+    glPopMatrix();
+}
+
 void windowResize(GLint newWidth, GLint newHeight) {
     width = newWidth / 2.0;
     height = newHeight / 2.0;
@@ -265,8 +322,6 @@ void onMouseWheel([[maybe_unused]] int button, int dir, [[maybe_unused]] int x, 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluOrtho2D(X_MIN, X_MAX, Y_MIN, Y_MAX);
-
-    glutPostRedisplay();
 }
 
 void onKeyDown(unsigned char character, int x, int y) {
