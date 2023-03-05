@@ -4,8 +4,6 @@
 #include <GL/gl.h>
 #include <GL/freeglut.h>
 #include <cmath>
-#include <unistd.h>
-#include <thread>
 
 #define X_MIN (xMin * scale)
 #define X_MAX (xMax * scale)
@@ -13,7 +11,7 @@
 #define Y_MIN (yMin * scale)
 #define Y_MAX (yMax * scale)
 
-#define PIXELS_PER_DOT 4
+#define PIXELS_PER_DOT 0.5
 
 constexpr double xMin = -std::numbers::pi, xMax = 3 * std::numbers::pi, yMin = -1.5, yMax = 1.5;
 double scale = 1;
@@ -24,7 +22,7 @@ void windowResize(GLint width, GLint height);
 
 void render();
 
-void onMouse(int button, int state, int x, int y);
+void onMouseWheel(int button, int dir, int x, int y);
 
 void drawGrid();
 
@@ -49,14 +47,12 @@ int main(int argc, char **argv) {
     glutInitWindowPosition(120, 80);
     glutCreateWindow("Hello, world");
 
-
-    glutMouseFunc(onMouse);
-    glutMouseWheelFunc(onMouse);
+    glutMouseWheelFunc(onMouseWheel);
     glutReshapeFunc(windowResize);
     glutDisplayFunc(render);
 
-
     glEnable(GL_BLEND);
+    glEnable(GL_POINT_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
@@ -190,7 +186,7 @@ void drawGrid() {
 
         double x = subunitValueX * i;
 
-        if (i % stepsPerUnitX == 0 || i % subunitsPerLabelX == 0) {
+        if (i % subunitsPerLabelX == 0) {
             std::snprintf(label, 24, "%g", x);
 
             pointToScreen(x, 0, screenX, screenY);
@@ -215,7 +211,7 @@ void drawGrid() {
 
         double y = subunitValueY * i;
 
-        if (i % stepsPerUnitY == 0 || i % subunitsPerLabelY == 0) {
+        if (i % subunitsPerLabelY == 0) {
             std::snprintf(label, 24, "%g", y);
 
             pointToScreen(0, y, screenX, screenY);
@@ -245,7 +241,7 @@ void drawGraph(double (*func)(double)) {
     double y;
     double screenX, screenY;
 
-    double stepX = PIXELS_PER_DOT / (2 * width);
+    double stepX = PIXELS_PER_DOT * (X_MAX - X_MIN) / (2 * width);
 
     for (double x = X_MIN; x <= X_MAX; x += stepX) {
         y = func(x);
@@ -259,8 +255,6 @@ void drawGraph(double (*func)(double)) {
 
     glEnd();
 }
-
-#pragma clang diagnostic pop
 
 void windowResize(GLint newWidth, GLint newHeight) {
     width = newWidth / 2.0;
@@ -305,7 +299,7 @@ void bitmapString(double x, double y, const char *string) {
     }
 }
 
-void onMouse(int button, int dir, int x, int y) {
+void onMouseWheel(int button, int dir, int x, int y) {
     scale *= std::pow(1.2, -dir / 2.0);
 
     glutPostRedisplay();
