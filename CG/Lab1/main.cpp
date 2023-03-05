@@ -2,19 +2,29 @@
 
 #include <GL/glut.h>
 #include <GL/gl.h>
+#include <GL/freeglut.h>
 #include <cmath>
+#include <unistd.h>
+#include <thread>
 
-#define X_MIN (-std::numbers::pi / 2)
-#define X_MAX (2 * std::numbers::pi)
+#define X_MIN (xMin * scale)
+#define X_MAX (xMax * scale)
 
-#define Y_MIN (-1.5)
-#define Y_MAX (+1.5)
+#define Y_MIN (yMin * scale)
+#define Y_MAX (yMax * scale)
+
+#define PIXELS_PER_DOT 4
+
+constexpr double xMin = -std::numbers::pi, xMax = 3 * std::numbers::pi, yMin = -1.5, yMax = 1.5;
+double scale = 1;
 
 double height, width;
 
 void windowResize(GLint width, GLint height);
 
 void render();
+
+void onMouse(int button, int state, int x, int y);
 
 void drawGrid();
 
@@ -25,10 +35,12 @@ void pointsToScreenVertices(double x1, double y1, double x2, double y2);
 void pointToScreen(double x, double y, double &screenX, double &screenY);
 
 int floorSigned(double x) {
-    return (int)floor(x) + (x < 0 ? 1 : 0);
+    return (int) floor(x) + (x < 0 ? 1 : 0);
 }
 
 void bitmapString(double x, double y, const char *string);
+
+void drawGraph(double (*func)(double));
 
 int main(int argc, char **argv) {
     glutInit(&argc, argv);
@@ -38,6 +50,8 @@ int main(int argc, char **argv) {
     glutCreateWindow("Hello, world");
 
 
+    glutMouseFunc(onMouse);
+    glutMouseWheelFunc(onMouse);
     glutReshapeFunc(windowResize);
     glutDisplayFunc(render);
 
@@ -52,22 +66,18 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-int counter = 0;
-
 void render() {
     glClearColor(1, 1, 1, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     drawGrid();
     drawAxis();
+    drawGraph(std::cos);
 
     glutSwapBuffers();
 }
 
 void drawAxis() {
-
-    constexpr double rangeX = X_MAX - X_MIN, rangeY = Y_MAX - Y_MIN;
-
     double originX, originY;
     pointToScreen(0, 0, originX, originY);
 
@@ -217,7 +227,7 @@ void drawGrid() {
             bitmapString(screenX - 22, screenY, label);
         }
 
-        if (i % stepsPerUnitX == 0) {
+        if (i % stepsPerUnitY == 0) {
             glBegin(GL_LINES);
 
             pointsToScreenVertices(X_MAX, y, X_MIN, y);
@@ -226,6 +236,30 @@ void drawGrid() {
         }
     }
 
+
+    glEnd();
+}
+
+void drawGraph(double (*func)(double)) {
+    glLineWidth(6);
+    glPointSize(4.5);
+
+    glBegin(GL_POINTS);
+
+    double y;
+    double screenX, screenY;
+
+    double stepX = PIXELS_PER_DOT / (2 * width);
+
+    for (double x = X_MIN; x <= X_MAX; x += stepX) {
+        y = func(x);
+
+        glColor3d(0.3, 0.4 - y * 0.4 / Y_MAX, 0.6 + y * 0.3 / Y_MAX);
+
+        pointToScreen(std::clamp(x, X_MIN, X_MAX), y, screenX, screenY);
+
+        glVertex2d(screenX, screenY);
+    }
 
     glEnd();
 }
@@ -258,7 +292,7 @@ void pointsToScreenVertices(double x1, double y1, double x2, double y2) {
 }
 
 void pointToScreen(double x, double y, double &screenX, double &screenY) {
-    constexpr double rangeX = X_MAX - X_MIN, rangeY = Y_MAX - Y_MIN;
+    double rangeX = X_MAX - X_MIN, rangeY = Y_MAX - Y_MIN;
 
     screenX = (x - X_MIN) / rangeX * 2 * width - width;
     screenY = (y - Y_MIN) / rangeY * 2 * height - height;
@@ -273,4 +307,10 @@ void bitmapString(double x, double y, const char *string) {
     for (const char *c = string; *c != '\0'; ++c) {
         glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c);
     }
+}
+
+void onMouse(int button, int dir, int x, int y) {
+    scale *= std::pow(1.2, -dir / 2.0);
+
+    glutPostRedisplay();
 }
