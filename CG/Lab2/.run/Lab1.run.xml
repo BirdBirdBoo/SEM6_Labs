@@ -5,7 +5,6 @@
     </envs>
     <method v="2">
       <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      <option name="CMake.Explicit.Target" predefinedTargetName="Lab2" />
     </method>
   </configuration>
 </component>
