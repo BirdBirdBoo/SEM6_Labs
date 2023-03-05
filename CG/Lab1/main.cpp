@@ -115,10 +115,6 @@ void drawAxis() {
     glEnd();
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "Simplify"
-#pragma ide diagnostic ignored "UnreachableCode"
-
 void drawGrid() {
     double minStepSizePixels = 16;
     double labelMinStepSizePixels = 88;
