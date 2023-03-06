@@ -1,6 +1,6 @@
 void windowResize(int width, int height);
 
-void render();
+void refreshDisplay();
 
 void onMouseWheel([[maybe_unused]] int button, int dir, int x, int y);
 

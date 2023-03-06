@@ -6,7 +6,10 @@
 #include <GL/gl.h>
 #include <GL/freeglut.h>
 #include <cmath>
+#include <chrono>
 #include <array>
+
+using namespace std::chrono_literals;
 
 #define X_MIN (xMin * scale)
 #define X_MAX (xMax * scale)
@@ -31,7 +34,7 @@ double height, width;
 double unitsPerPixelX;
 double unitsPerPixelY;
 
-void drawQuad();
+void drawQuad(long double timeSinceLastFrameMs);
 
 void glexVertex2p(const Point &point) {
     glVertex2d(point.first, point.second);
@@ -52,7 +55,7 @@ int main(int argc, char **argv) {
     glutKeyboardFunc(onKeyDown);
     glutMouseWheelFunc(onMouseWheel);
     glutReshapeFunc(windowResize);
-    glutDisplayFunc(render);
+    glutDisplayFunc(refreshDisplay);
 
     glEnable(GL_BLEND);
     glEnable(GL_POINT_SMOOTH);
@@ -65,13 +68,28 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void render() {
+void render(long double elapsedMs) {
+    drawGrid();
+    drawAxis();
+    drawQuad(elapsedMs);
+}
+
+void refreshDisplay() {
+    static auto currentFrameTime = std::chrono::steady_clock::now();
+    static auto lastFrameTime = currentFrameTime;
+
+    currentFrameTime = std::chrono::steady_clock::now();
+
     glClearColor(1, 1, 1, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    drawGrid();
-    drawAxis();
-    drawQuad();
+    auto elapsedDurationNs = duration_cast<std::chrono::nanoseconds>((currentFrameTime - lastFrameTime));
+
+    long double elapsedMs = elapsedDurationNs.count() / 1000000.0;
+
+    render(elapsedMs);
+
+    lastFrameTime = currentFrameTime;
 
     glutSwapBuffers();
 }
@@ -242,14 +260,21 @@ void drawGrid() {
     glEnd();
 }
 
-void drawQuad() {
-    const int anchorPoint = 1;
+void drawQuad(long double timeSinceLastFrameMs) {
+    static long double timeMs = 0;
+
+    timeMs += timeSinceLastFrameMs;
+
+    double timeS = static_cast<double>(timeMs) / 1000;
+
+    const int anchorPoint = 0;
 
     const double a = 0.5;
-    static int counter = 0;
-    ++counter;
-    double rotationAngle = counter / 2.0;
-    double x = ((counter % 1000) - 500) / 100.0;
+    const double xRange = 5;
+
+    double rotationAngle = fmod(timeS * 180, 360);
+
+    double x = xRange * (fmod(timeS / 5, 1) - 0.5);
 
     glColor4d(0.8, 0.4, 0.4, 0.4);
 
