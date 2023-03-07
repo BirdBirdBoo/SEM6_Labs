@@ -76,7 +76,7 @@ void refreshDisplay() {
 
     auto elapsedDurationNs = duration_cast<std::chrono::nanoseconds>((currentFrameTime - lastFrameTime));
 
-    long double elapsedMs = elapsedDurationNs.count() / 1000000.0;
+    long double elapsedMs = static_cast<long>(elapsedDurationNs.count()) / 1000000.0;
 
     render(elapsedMs);
 
