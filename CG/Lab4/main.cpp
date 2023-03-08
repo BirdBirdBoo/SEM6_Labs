@@ -9,11 +9,26 @@
 #include <thread>
 
 using namespace std::chrono_literals;
+GLubyte texture_image[64][64][3];
 
 void drawCube(long double timeSinceLastFrameMs);
 
 int main(int argc, char **argv) {
     glutInit(&argc, argv);
+
+    for (int i = 0; i < 64; i++) {
+        for (int j = 0; j < 64; j++) {
+            if ((i / 4 + j / 4) % 2 == 0) {
+                texture_image[i][j][0] = 255; // R component
+                texture_image[i][j][1] = 255; // G component
+                texture_image[i][j][2] = 255; // B component
+            } else {
+                texture_image[i][j][0] = 0; // R component
+                texture_image[i][j][1] = 0; // G component
+                texture_image[i][j][2] = 0; // B component
+            }
+        }
+    }
 
     glutInitWindowSize(1280, 580);
     glutInitWindowPosition(120, 80);
@@ -31,7 +46,7 @@ int main(int argc, char **argv) {
     glDepthFunc(GL_LEQUAL);
 
     glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT1);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     glEnable(GL_COLOR_MATERIAL);
 
@@ -41,28 +56,87 @@ int main(int argc, char **argv) {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
 
-    const float lightPos[]{0.f, 10.f, -5.f, 1.f};
-    const float specular[]{3.f, 0.f, 3.f, 1};
+    const float lightPos[]{0.f, 20.f, -5.f, 1.f};
+    const float specular[]{1.f, 1.f, 0.7f, 1};
     const float diffuse[]{3.f, 0.f, 3.f, 10};
-    const float ambient[]{0.2f, 0.2f, 0.8f, 1};
-    const float direction[]{0.5f, -1.f, -0.5f};
+    const float ambient[]{0.2f, 0.2f, 0.2f, 1};
+    const float direction[]{0.5f, -1.f, -0.2f};
     glLightfv(GL_LIGHT1, GL_POSITION, lightPos);
     glLightfv(GL_LIGHT1, GL_SPECULAR, specular);
     //glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
     glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, direction);
-    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 10);
-    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 60);
+    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 16);
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 90);
     //glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
 
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+
+    glEnable(GL_LIGHT1);
 
     glutMainLoop();
 
     return 0;
 }
 
+
+// Function to draw the cone
+void drawCone() {
+    // Set the color to green
+
+    const float redCubeColor[]{1.f, 1.f, 1.f};
+
+    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, redCubeColor);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, redCubeColor);
+    glColor3f(1.f, 1.f, 1.f);
+
+    glPushMatrix();
+    glRotated(90, -1, 0, 0);
+
+    // Draw the cone
+    glutSolidCone(2.0f, 4.0f, 30, 30);
+    glPopMatrix();
+}
+
+// Function to draw the cylinder
+void drawCylinder() {
+    // Set the texture for the cylinder
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 64, 64, 0, GL_RGB, GL_UNSIGNED_BYTE, texture_image);
+
+
+    glPushMatrix();
+    glTranslated(-4, 1, 0);
+    glRotated(90, 0, 1, 0);
+
+
+    // Draw the cylinder with texture
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glColor3f(1, 1,1);
+    GLUquadricObj *cylinder = gluNewQuadric();
+    gluQuadricTexture(cylinder, GL_TRUE);
+    gluCylinder(cylinder, 1.0f, 1.0f, 4.0f, 30, 30);
+    gluDeleteQuadric(cylinder);
+    glDisable(GL_TEXTURE_2D);
+
+    glPopMatrix();
+}
+
 void render(long double elapsedMs) {
-    drawCube(elapsedMs);
+    //drawCube(elapsedMs);
+
+    glPushMatrix();
+    glTranslatef(1, -3, -10);
+
+    drawCone();
+    drawCylinder();
+
+    glPopMatrix();
 }
 
 void refreshDisplay() {
@@ -128,7 +202,7 @@ void drawCube(long double timeSinceLastFrameMs) {
 
     glPopMatrix();
 
-    glColor3f(0,0,0.6);
+    glColor3f(0, 0, 0.6);
     glTranslated(8, 0, 0);
 
     glutSolidSphere(2, 32, 32);
