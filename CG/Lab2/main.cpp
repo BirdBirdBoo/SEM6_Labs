@@ -34,6 +34,8 @@ double height, width;
 double unitsPerPixelX;
 double unitsPerPixelY;
 
+const int anchorPoint = 1;
+
 void drawQuad(long double timeSinceLastFrameMs);
 
 void glexVertex2p(const Point &point) {
@@ -267,21 +269,18 @@ void drawQuad(long double timeSinceLastFrameMs) {
 
     double timeS = static_cast<double>(timeMs) / 1000;
 
-    const int anchorPoint = 0;
-
     const double a = 0.5;
-    const double xRange = 5;
+    const double xRange = 3;
 
     double rotationAngle = fmod(timeS * 180, 360);
 
-    double x = xRange * (fmod(timeS / 5, 1) - 0.5);
+    double x = xRange * sin(timeS);
 
     glColor4d(0.8, 0.4, 0.4, 0.4);
 
     glPushMatrix();
 
     glTranslated(x, a * x, 0);
-    glTranslated(quad[anchorPoint].first, quad[anchorPoint].second, 0);
     glRotated(rotationAngle, 0, 0, 1);
     glTranslated(-quad[anchorPoint].first, -quad[anchorPoint].second, 0);
 
