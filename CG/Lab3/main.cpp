@@ -16,9 +16,9 @@ float aspectRatio = 1.6;
 
 float surfaceControlPoints[4][4][4]{
         {{0, 0,   0.2, 1}, {.6, 0,   -.35, 1}, {.9,  0,   .6,  1}, {2, 0,   .05, 1}},
-        {{0, 0.5, 0.3, 1}, {1,  .6,  -.25, 1}, {1.2, .5,  1.2, 1}, {2, .5,  .05, 1}},
-        {{0, 1,   0,   1}, {.6, 1.2, .35,  1}, {.9,  1,   .6,  1}, {2, 1,   .45, 1}},
-        {{0, 1.5, 0,   1}, {.6, 1.5, -.35, 1}, {.9,  1.8, .6,  1}, {2, 1.5, .45, 1}}
+        {{0, 0.5, 0.3, 1}, {.5,  .5,  -.25, 1}, {1.2, .5,  1.2, 1}, {2, .5,  .05, 1}},
+        {{0, 1,   0,   1}, {.6, 1, .35,  1}, {.9,  1,   .6,  1}, {2, 1,   .45, 1}},
+        {{0, 1.5, 0,   1}, {.6, 1.5, -.35, 1}, {.9,  1.5, .6,  1}, {2, 1.5, .45, 1}}
 };
 
 float trimCurveControlPoints[5][3]{
@@ -174,13 +174,11 @@ void drawCube(long double timeSinceLastFrameMs) {
 
     glPopMatrix();
 
-    glTranslated(8, 0, 0);
-    glutSolidSphere(2, 32, 32);
 
     glEnable(GL_MAP2_VERTEX_3);
 
     glPushMatrix();
-    glTranslatef(-16, 0, -12);
+    glTranslatef(-8, 0, -2);
     glScalef(6, 6, 6);
     glRotatef(rotationAngle, 0, 1, 0);
 
@@ -195,6 +193,9 @@ void drawCube(long double timeSinceLastFrameMs) {
 
     gluBeginSurface(surface);
 
+    gluNurbsProperty(surface, GLU_DISPLAY_MODE, useWireframes ? GLU_OUTLINE_POLYGON : GLU_FILL);
+    gluNurbsProperty(surface, GLU_CULLING, GLU_TRUE);
+
     float surfaceKnots[] = {0, 0, 0, 0, 1, 1, 1, 1};
 
     gluNurbsSurface(surface, 8, surfaceKnots, 8, surfaceKnots, 16, 4, reinterpret_cast<float *>(surfaceControlPoints),
@@ -205,13 +206,11 @@ void drawCube(long double timeSinceLastFrameMs) {
     gluPwlCurve(surface, 5, &edgePt[0][0], 2, GLU_MAP1_TRIM_2);
     gluEndTrim(surface);
 
-    float curveKnots[] = {0, 0, 0, 0,0,1, 1, 1, 1, 1};
-
     gluBeginTrim(surface);
-
+    float curveKnots[] = {0, 0, 0, 0,0,1, 1, 1, 1, 1};
     gluNurbsCurve(surface, 10, curveKnots, 3, reinterpret_cast<float *>(trimCurveControlPoints), 5, GLU_MAP1_TRIM_3);
-
     gluEndTrim(surface);
+
 
     gluEndSurface(surface);
 
