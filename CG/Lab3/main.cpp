@@ -12,19 +12,20 @@ using namespace std::chrono_literals;
 
 bool usePerspective = true;
 bool useWireframes = false;
+bool useSmoothShading = true;
 float aspectRatio = 1.6;
 
 float surfaceControlPoints[4][4][4]{
         {{0, 0,   0.2, 1}, {.6, 0,   -.35, 1}, {.9,  0,   .6,  1}, {2, 0,   .05, 1}},
-        {{0, 0.5, 0.3, 1}, {.5,  .5,  -.25, 1}, {1.2, .5,  1.2, 1}, {2, .5,  .05, 1}},
-        {{0, 1,   0,   1}, {.6, 1, .35,  1}, {.9,  1,   .6,  1}, {2, 1,   .45, 1}},
+        {{0, 0.5, 0.3, 1}, {.5, .5,  -.25, 1}, {1.2, .5,  1.2, 1}, {2, .5,  .05, 1}},
+        {{0, 1,   0,   1}, {.6, 1,   .35,  1}, {.9,  1,   .6,  1}, {2, 1,   .45, 1}},
         {{0, 1.5, 0,   1}, {.6, 1.5, -.35, 1}, {.9,  1.5, .6,  1}, {2, 1.5, .45, 1}}
 };
 
 float trimCurveControlPoints[5][3]{
         {0.58, 0.23, 1},
-        {0.02, 0.09, 1},
-        {0.2, 0.6, 1},
+        {0.02, 0.09, 2},
+        {0.2,  0.6,  1},
         {0.79, 0.36, 1},
         {0.58, 0.23, 1},
 };
@@ -46,7 +47,7 @@ void onNurbsError(GLenum nErrorCode) {
 int main(int argc, char **argv) {
     glutInit(&argc, argv);
 
-    glutInitWindowSize(1280, 580);
+    glutInitWindowSize(1280, 720);
     glutInitWindowPosition(120, 80);
     glutCreateWindow("Hello, world");
 
@@ -67,7 +68,6 @@ int main(int argc, char **argv) {
     glEnable(GL_COLOR_MATERIAL);
 
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    glShadeModel(GL_SMOOTH);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
@@ -109,6 +109,7 @@ void refreshDisplay() {
 
     glClearColor(.8, .8, .8, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glShadeModel(useSmoothShading ? GL_SMOOTH : GL_FLAT);
 
     auto elapsedDurationNs = duration_cast<std::chrono::nanoseconds>((currentFrameTime - lastFrameTime));
 
@@ -178,7 +179,7 @@ void drawCube(long double timeSinceLastFrameMs) {
     glEnable(GL_MAP2_VERTEX_3);
 
     glPushMatrix();
-    glTranslatef(-8, 0, -2);
+    glTranslatef(-8, 0, -20);
     glScalef(6, 6, 6);
     glRotatef(rotationAngle, 0, 1, 0);
 
@@ -207,7 +208,7 @@ void drawCube(long double timeSinceLastFrameMs) {
     gluEndTrim(surface);
 
     gluBeginTrim(surface);
-    float curveKnots[] = {0, 0, 0, 0,0,1, 1, 1, 1, 1};
+    float curveKnots[] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
     gluNurbsCurve(surface, 10, curveKnots, 3, reinterpret_cast<float *>(trimCurveControlPoints), 5, GLU_MAP1_TRIM_3);
     gluEndTrim(surface);
 
@@ -261,6 +262,9 @@ void onKeyDown(unsigned char character, int x, int y) {
             break;
         case 'w':
             useWireframes = true;
+            break;
+        case 's':
+            useSmoothShading = !useSmoothShading;
             break;
     }
 }
