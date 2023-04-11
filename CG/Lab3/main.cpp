@@ -66,6 +66,8 @@ int main(int argc, char **argv) {
     glEnable(GL_LIGHT1);
 
     glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_AUTO_NORMAL);
+    glEnable(GL_NORMALIZE);
 
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
