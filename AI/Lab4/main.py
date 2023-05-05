@@ -33,7 +33,9 @@ def gradient(theta: np.ndarray, pts: np.ndarray, classes: np.ndarray, gamma=0.5)
     def y_prop(pt, c):
         y = sigma_linear(pt, theta)
 
-        return c / y - (1 - c) / (1 - y)
+        return c - y
+
+        # return c / y if c != 0 else (1 - c) / (1 - y)
 
     return - gamma / n * np.array(
         [sum([sigma_mul_one_sigma(pt, theta) * safe_x(pt, i) * y_prop(pt, c)
@@ -42,7 +44,7 @@ def gradient(theta: np.ndarray, pts: np.ndarray, classes: np.ndarray, gamma=0.5)
 
 
 def generate_data(n=2000):
-    return make_classification(n, n_features=2, n_redundant=0, class_sep=1, random_state=145, flip_y=0.0,
+    return make_classification(n, n_features=2, n_redundant=0, class_sep=1, random_state=10, flip_y=0.0,
                                n_clusters_per_class=1)
 
 
@@ -60,7 +62,10 @@ def show_pts(pts, classes, theta=None):
 
         boundary_df = pd.DataFrame({'x0': boundary_data[:, 0], 'x1': boundary_data[:, 1]})
 
-        sns.lineplot(data=boundary_df, x='x0', y='x1')
+        sns.lineplot(data=boundary_df, x='x0', y='x1', color='red')
+
+    plt.xlim(-4, 4)
+    plt.ylim(-6, 6)
 
     plt.show()
 
@@ -71,10 +76,11 @@ def main():
     show_pts(pts, classes)
 
     theta = np.ones(3)
-    theta[1] *= -1
     show_pts(pts, classes)
 
-    while np.linalg.norm(d_theta := gradient(theta, pts, classes)) > 0.001:
+    while np.linalg.norm(d_theta := gradient(theta, pts, classes, 16)) > 0.1:
+        # print(d_theta)
+        #show_pts(pts, classes, theta)
         theta += d_theta
 
     print(f'Final fit: {theta}')
