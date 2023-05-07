@@ -1,35 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Lab8;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow : Window
+public partial class MainWindow
 {
     private const double MoveSpeed = 3;
     private const double ScaleSpeed = 2;
     
-    private bool _isEditing = false;
+    private bool _isEditing;
     private bool _isAnimationRunning = true;
-    private bool _isAnimationPausedByEdit = false;
+    private bool _isAnimationPausedByEdit;
     private EditMode _editMode = EditMode.None;
     private Point _mouseEditOrigin = new(double.NaN, double.NaN);
 
@@ -46,7 +34,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        this.KeyUp += OnCubeKeyUp;
+        KeyUp += OnCubeKeyUp;
         CubeRotationStoryboard.Begin();
     }
 
@@ -181,7 +169,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private TResource GetWindowResource<TResource>([CallerMemberName] string resource = null)
+    private TResource GetWindowResource<TResource>([CallerMemberName] string resource = null!)
     {
         return (TResource)Resources[resource];
     }
