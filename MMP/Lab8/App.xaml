@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:Lab8"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+         <Color x:Key="TransparentBackground">#10000000</Color>
     </Application.Resources>
 </Application>

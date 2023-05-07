@@ -80,7 +80,7 @@ def main():
 
     while np.linalg.norm(d_theta := gradient(theta, pts, classes, 16)) > 0.1:
         # print(d_theta)
-        #show_pts(pts, classes, theta)
+        show_pts(pts, classes, theta)
         theta += d_theta
 
     print(f'Final fit: {theta}')
