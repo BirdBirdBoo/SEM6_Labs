@@ -10,6 +10,7 @@ using namespace std::chrono_literals;
 GLuint checkerboardTexture;
 
 int fogIndex = 0;
+int lightIndex = 0;
 
 void initCheckerboardTexture();
 
@@ -20,6 +21,7 @@ void refreshDisplay();
 void onKeyDown(unsigned char character, int x, int y);
 
 int main(int argc, char **argv) {
+    auto env = std::getenv("PATH");
     glutInit(&argc, argv);
 
     glutInitWindowSize(1280, 580);
@@ -47,25 +49,44 @@ int main(int argc, char **argv) {
     glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
 
     const float lightPos[]{-3.f, 12.f, 5.f, 1.f};
-    const float direction[]{0.2f, -1.f, -0.9f};
-    /*const float specular[]{0.4f, .4f, 0.4f, 1};
-    const float diffuse[]{0.4f, 0.f, 0.1f, 1};
-    const float ambient[]{0.05f, 0.05f, 0.15f, 1};*/
+    const float direction[]{0.2f, -1.f, -1.f};
     const float specular[]{0.4f, .4f, 0.4f, 1};
     const float diffuse[]{0.4f, .4f, 0.4f, 1};
-    const float ambient[]{0.05f, 0.05f, 0.05f, 1};
 
     glLightfv(GL_LIGHT1, GL_POSITION, lightPos);
     glLightfv(GL_LIGHT1, GL_SPECULAR, specular);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
     glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, direction);
     glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 2);
-    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 10);
-    glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 8);
 
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+    const float lightPosFar[]{-300.f, 200, 0, 1.f};
+    const float diffuseFar[]{0.4f, .4f, 0.4f, 1};
+    const float specularFar[]{0.1f, .1f, 0.1f, 1};
 
-    glEnable(GL_LIGHT1);
+    glLightfv(GL_LIGHT2, GL_POSITION, lightPosFar);
+    glLightfv(GL_LIGHT2, GL_SPECULAR, specularFar);
+    glLightfv(GL_LIGHT2, GL_DIFFUSE, diffuseFar);
+
+    const float ambient[]{0.15f, 0.15f, 0.15f, 1};
+    glLightfv(GL_LIGHT3, GL_AMBIENT, ambient);
+
+    const float lightPosSpot[]{6.f, 8.f, 0.f, 1.f};
+    const float diffuseSpot[]{0.6f, .4f, 0.4f, 1};
+    const float specularSpot[]{0.1f, .1f, 0.1f, 1};
+
+    glLightfv(GL_LIGHT4, GL_POSITION, lightPosSpot);
+    glLightfv(GL_LIGHT4, GL_SPECULAR, specularSpot);
+    glLightfv(GL_LIGHT4, GL_DIFFUSE, diffuseSpot);
+
+    const float noAmbientLight[]{0, 0, 0, 1};
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, noAmbientLight);
+
+    glDisable(GL_LIGHT1);    // projector
+    glDisable(GL_LIGHT2);    // far
+    glDisable(GL_LIGHT3);    // ambient
+    glDisable(GL_LIGHT4);    // spot
+
 
     initCheckerboardTexture();
 
@@ -132,25 +153,27 @@ void render(float totalTimeSeconds, long double frameTimeS) {
 
     glEnable(GL_FOG);
     glFogi(GL_FOG_MODE, fogIndex == 0 ? GL_LINEAR : (GL_EXP + fogIndex % 2));
-    glFogf(GL_FOG_START, 6);
-    glFogf(GL_FOG_END, 20);
-    glFogf(GL_FOG_DENSITY, 0.03);
+    glFogf(GL_FOG_START, 8);
+    glFogf(GL_FOG_END, 16);
+    glFogf(GL_FOG_DENSITY, 0.06);
     glFogfv(GL_FOG_COLOR, fogColor);
 
+    glEnable(GL_LIGHT1 + lightIndex);
+
     float rotationAngleY = fmodf(totalTimeSeconds * 120, 360);
-    float rotationAngleZ = fmodf(totalTimeSeconds * 90, 360);
 
     glPushMatrix();
 
-    glTranslatef(1, -3, -10);
+    glTranslatef(1, -3, -12);
 
     glRotatef(rotationAngleY, 0, 1, 0);
-    glRotatef(rotationAngleZ, 1, 0, 0);
 
     drawCone();
     drawCylinder();
 
     glPopMatrix();
+
+    glDisable(GL_LIGHT1 + lightIndex);
 }
 
 void refreshDisplay() {
@@ -230,6 +253,9 @@ void onKeyDown(unsigned char character, int x, int y) {
             break;
         case 'f':
             fogIndex = (fogIndex + 1) % 3;
+            break;
+        case 'l':
+            lightIndex = (lightIndex + 1) % 4;
             break;
     }
 }
