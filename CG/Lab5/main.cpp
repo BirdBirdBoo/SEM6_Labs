@@ -75,21 +75,24 @@ void updateLights() {
 }
 
 void applySpeed(vec3 &position, const vec3 &speed, float timeSeconds) {
-    position[0] += static_cast<float>(speed[0] * timeSeconds * animationSpeed);
-    position[1] += static_cast<float>(speed[1] * timeSeconds * animationSpeed);
-    position[2] += static_cast<float>(speed[2] * timeSeconds * animationSpeed);
+    position[0] = std::clamp(position[0] + static_cast<float>(speed[0] * timeSeconds * animationSpeed), -xLimit,
+                             xLimit);
+    position[1] = std::clamp(position[1] + static_cast<float>(speed[1] * timeSeconds * animationSpeed), -yLimit,
+                             yLimit);
+    position[2] = std::clamp(position[2] + static_cast<float>(speed[2] * timeSeconds * animationSpeed), zLimitMin,
+                             zLimitMax);
 }
 
 void checkPositionAndBounce(const vec3 &position, vec3 &speed) {
-    if (position[0] < -xLimit || position[0] > xLimit) {
+    if (position[0] <= -xLimit || position[0] >= xLimit) {
         speed[0] = -speed[0];
     }
 
-    if (position[1] < -yLimit || position[1] > yLimit) {
+    if (position[1] <= -yLimit || position[1] >= yLimit) {
         speed[1] = -speed[1];
     }
 
-    if (position[2] < zLimitMin || position[2] > zLimitMax) {
+    if (position[2] <= zLimitMin || position[2] >= zLimitMax) {
         speed[2] = -speed[2];
     }
 }
@@ -255,8 +258,8 @@ void render(float totalTimeSeconds, long double frameTimeMs) {
 
     glPopMatrix();
 
-    applySpeed(coneTranslation, coneSpeed, static_cast<float>(frameTimeMs) / 1000);
     checkPositionAndBounce(coneTranslation, coneSpeed);
+    applySpeed(coneTranslation, coneSpeed, static_cast<float>(frameTimeMs) / 1000);
 
     coneRotationAngle += coneRotationSpeed * static_cast<float>(frameTimeMs) / 1000 * animationSpeed;
     coneRotationAngle = fmodf(coneRotationAngle, 360);
