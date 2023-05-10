@@ -3,11 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Lab8"
         mc:Ignorable="d"
         Title="MainWindow"
-        Height="450"
-        Width="800"
+        Height="720"
+        Width="1280"
         WindowStyle="None"
         AllowsTransparency="True"
         BorderThickness="2"
@@ -16,8 +15,6 @@
     <Window.Background>
         <SolidColorBrush Color="Black"
                          Opacity="0.2" />
-        <!-- <SolidColorBrush Opacity="0"></SolidColorBrush> -->
-
     </Window.Background>
 
     <Window.Resources>
@@ -32,10 +29,10 @@
                                      Angle="0" />
             </RotateTransform3D.Rotation>
         </RotateTransform3D>
-        
+
         <ScaleTransform3D x:Key="CubeScaleTransform" />
         <TranslateTransform3D x:Key="CubeTranslateTransform" />
-        
+
         <Storyboard TargetName="CubeModel"
                     x:Key="CubeRotationStoryboard"
                     TargetProperty="Transform.(Transform3DGroup.Children)[0].(RotateTransform3D.Rotation).(AxisAngleRotation3D.Angle)">
@@ -52,7 +49,7 @@
 
     <Viewport3D x:Name="Viewport">
         <Viewport3D.Camera>
-            <PerspectiveCamera Position="0,0,4"
+            <PerspectiveCamera Position="0,0,8"
                                LookDirection="0,0,-1"
                                FieldOfView="90" />
         </Viewport3D.Camera>
@@ -75,8 +72,6 @@
                             <StaticResource ResourceKey="CubeRotateTransform" />
                             <StaticResource ResourceKey="CubeScaleTransform" />
                             <StaticResource ResourceKey="CubeTranslateTransform" />
-                            
-                            
                         </Transform3DGroup>
                     </GeometryModel3D.Transform>
                 </GeometryModel3D>
