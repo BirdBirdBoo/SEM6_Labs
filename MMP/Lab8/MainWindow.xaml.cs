@@ -7,12 +7,9 @@ using System.Windows.Media.Media3D;
 
 namespace Lab8;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
 public partial class MainWindow
 {
-    private const double MoveSpeed = 3;
+    private const double MoveSpeed = 8;
     private const double ScaleSpeed = 2;
     
     private bool _isEditing;
